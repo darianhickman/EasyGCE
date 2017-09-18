@@ -81,7 +81,8 @@ gce_create_startup_script(){
   # empty script if already exists
   > ${GCE_VM_STARTUP_SCRIPT}
   # concatenate all scripts from scripts directory into one
-  for script in scripts/*; do
+  SCRIPTS_DIR="$(dirname "$(readlink -e ${BASH_SOURCE[0]})")/scripts"
+  for script in ${SCRIPTS_DIR}/*; do
     cat $script >> ${GCE_VM_STARTUP_SCRIPT}
   done
 }
