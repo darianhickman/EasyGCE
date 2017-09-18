@@ -1,0 +1,5 @@
+:80 {
+proxy /wetty localhost:3000
+browse /
+log /var/log/caddy/example.com/access.log
+}
