@@ -50,7 +50,22 @@ RUN $INST_SCRIPTS/libnss_wrapper.sh
 ADD ./src/common/scripts $STARTUPDIR
 RUN $INST_SCRIPTS/set_user_permission.sh $STARTUPDIR $HOME
 
-USER 1000
+### Install EasyGCE
+RUN apt-get --assume-yes install git python-pip xrdp curl apt-transport-https \
+    && echo "deb http://packages.cloud.google.com/apt cloud-sdk-xenial main" > /etc/apt/sources.list.d/google-cloud-sdk.list \
+    && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
+    && pip install awscli --upgrade --user \
+    && echo "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ wheezy main" > /etc/apt/sources.list.d/azure-cli.list \
+    && apt-key adv --keyserver packages.microsoft.com --recv-keys 417A0893 \
+    && curl https://getcaddy.com | /bin/bash -s personal net \
+    && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+    && mkdir -p /opt/wetty && git clone https://github.com/krishnasrinivas/wetty /opt/wetty \
+    && apt-get update && apt-get install --assume-yes google-cloud-sdk azure-cli nodejs filezilla \
+    && apt-get --assume-yes install npm || true
+
+COPY src/caddyfile /Caddyfile
+
+USER 1984
 
 ENTRYPOINT ["/dockerstartup/vnc_startup.sh"]
 CMD ["--tail-log"]
