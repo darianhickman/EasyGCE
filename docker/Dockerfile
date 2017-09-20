@@ -60,8 +60,7 @@ RUN apt-get --assume-yes install git python-pip xrdp curl apt-transport-https \
     && curl https://getcaddy.com | /bin/bash -s personal net \
     && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
     && mkdir -p /opt/wetty && git clone https://github.com/krishnasrinivas/wetty /opt/wetty \
-    && apt-get update && apt-get install --assume-yes google-cloud-sdk azure-cli nodejs filezilla \
-    && apt-get --assume-yes install npm || true
+    && apt-get update && apt-get install --assume-yes google-cloud-sdk azure-cli nodejs filezilla
 
 COPY src/caddyfile /Caddyfile
 

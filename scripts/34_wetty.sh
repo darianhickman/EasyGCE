@@ -3,7 +3,6 @@ install_wetty(){
   # install nodejs and npm
   curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
   sudo apt-get install --assume-yes nodejs
-  sudo apt-get install --assume-yes npm
   # pull from github and do npm install
   if [[ ! -d /opt/wetty ]]; then
     sudo mkdir -p /opt/wetty 
