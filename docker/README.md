@@ -25,6 +25,8 @@ If you want to get into the container use interactive mode `-it` and `bash`
 
     docker run -it -p 5901:5901 -p 6901:6901 <docker_image>
 
+Apps are run with default user `ubuntu` which has passwordless sudo. For GUI actions there is password. Default password is 23456789. It can be changed by providing environment variable `UBUNTU_USER_PASSWORD`
+
 Build an image from scratch:
 
     docker build -t <docker_image_tag> .
@@ -54,7 +56,7 @@ USER 1000
 
 ### 2) Change User of running container
 
-Per default, all container processes will executed with user id `1000`. You can change the user id like follow: 
+Per default, all container processes will executed with user `ubuntu`. You can change the user id like follow: 
 
 #### 2.1) Using root (user id `0`)
 Add the `--user` flag to your docker run command:

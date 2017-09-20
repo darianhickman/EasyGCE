@@ -8,18 +8,24 @@ ENV REFRESHED_AT 2017-09-14
 # noVNC webport, connect via http://IP:6901/?password=vncpassword
 ENV DISPLAY=:1 \
     VNC_PORT=5901 \
-    NO_VNC_PORT=6901
-EXPOSE $VNC_PORT $NO_VNC_PORT
+    NO_VNC_PORT=6901 \
+    UBUNTU_USER_PASSWORD=23456789
+EXPOSE $VNC_PORT $NO_VNC_PORT 80 3389
+
+## User create
+RUN useradd -m ubuntu && mkdir /etc/sudoers.d \
+    && echo "ubuntu ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/ubuntu \
+    && echo "ubuntu:$UBUNTU_USER_PASSWORD" | chpasswd
 
 ### Envrionment config
-ENV HOME=/headless \
+ENV HOME=/home/ubuntu \
     TERM=xterm \
     STARTUPDIR=/dockerstartup \
     INST_SCRIPTS=$HOME/install \
     NO_VNC_HOME=$HOME/noVNC \
     DEBIAN_FRONTEND=noninteractive \
     VNC_COL_DEPTH=24 \
-    VNC_RESOLUTION=1280x1024 \
+    VNC_RESOLUTION=1920x1080 \
     VNC_PW=vncpassword \
     VNC_VIEW_ONLY=false
 WORKDIR $HOME
@@ -50,8 +56,8 @@ RUN $INST_SCRIPTS/libnss_wrapper.sh
 ADD ./src/common/scripts $STARTUPDIR
 RUN $INST_SCRIPTS/set_user_permission.sh $STARTUPDIR $HOME
 
-### Install EasyGCE
-RUN apt-get --assume-yes install git python-pip xrdp curl apt-transport-https \
+### Install EasyGCE dependencies
+RUN apt-get --assume-yes install git python-pip xrdp curl apt-transport-https sudo openssh-server supervisor \
     && echo "deb http://packages.cloud.google.com/apt cloud-sdk-xenial main" > /etc/apt/sources.list.d/google-cloud-sdk.list \
     && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
     && pip install awscli --upgrade --user \
@@ -62,9 +68,15 @@ RUN apt-get --assume-yes install git python-pip xrdp curl apt-transport-https \
     && mkdir -p /opt/wetty && git clone https://github.com/krishnasrinivas/wetty /opt/wetty \
     && apt-get update && apt-get install --assume-yes google-cloud-sdk azure-cli nodejs filezilla
 
-COPY src/caddyfile /Caddyfile
+### Update wetty
+RUN cd /opt/wetty && sudo npm install
 
-USER 1984
+### Copy conf files
+COPY ./src/caddyfile /Caddyfile
+COPY ./src/services/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-ENTRYPOINT ["/dockerstartup/vnc_startup.sh"]
-CMD ["--tail-log"]
+### Make directories and files
+RUN mkdir -p /var/run/sshd && touch /var/log/caddy.log && chown ubuntu:ubuntu /var/log/caddy.log
+
+### Run everything
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
