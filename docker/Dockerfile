@@ -13,7 +13,7 @@ ENV DISPLAY=:1 \
 EXPOSE $VNC_PORT $NO_VNC_PORT 80 3389
 
 ## User create
-RUN useradd -m ubuntu && mkdir /etc/sudoers.d \
+RUN useradd -s /bin/bash -m ubuntu && mkdir /etc/sudoers.d \
     && echo "ubuntu ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/ubuntu \
     && echo "ubuntu:$UBUNTU_USER_PASSWORD" | chpasswd
 
@@ -67,6 +67,15 @@ RUN apt-get --assume-yes install git python-pip xrdp curl apt-transport-https su
     && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
     && mkdir -p /opt/wetty && git clone https://github.com/krishnasrinivas/wetty /opt/wetty \
     && apt-get update && apt-get install --assume-yes google-cloud-sdk azure-cli nodejs filezilla
+
+### Download Azure Storage Explorer and set home directory permissions
+COPY ./src/azure-icon-250x250.png /home/ubuntu/azure_icon.png
+COPY ./src/common/scripts/set_permissions.sh ${HOME}/set_permissions.sh
+COPY ./src/common/install/rdesktop1.6.0.tar.gz ${HOME}/rdesktop1.6.0.tar.gz 
+RUN curl -L https://go.microsoft.com/fwlink/?LinkId=722418 -o /tmp/az_storage_explorer.tar.gz \
+    && cd /tmp && mkdir -p ${HOME}/.az && tar xf az_storage_explorer.tar.gz -C ${HOME}/.az \
+    && ln -s ${HOME}/.az/StorageExplorer /bin/azurestorageexplorer
+    #&& mkdir ${HOME}/rdesktop && tar xf {HOME}/rdesktop1.6.0.tar.gz -C ${HOME}/rdesktop
 
 ### Update wetty
 RUN cd /opt/wetty && sudo npm install
