@@ -69,13 +69,14 @@ RUN apt-get --assume-yes install git python-pip xrdp curl apt-transport-https su
     && apt-get update && apt-get install --assume-yes google-cloud-sdk azure-cli nodejs filezilla
 
 ### Download Azure Storage Explorer and set home directory permissions
+COPY ./src/services/caddy /etc/init.d/caddy
 COPY ./src/azure-icon-250x250.png /home/ubuntu/azure_icon.png
 COPY ./src/common/scripts/set_permissions.sh ${HOME}/set_permissions.sh
-COPY ./src/common/install/rdesktop1.6.0.tar.gz ${HOME}/rdesktop1.6.0.tar.gz 
+COPY ./src/services/caddy.sh /caddy.sh
 RUN curl -L https://go.microsoft.com/fwlink/?LinkId=722418 -o /tmp/az_storage_explorer.tar.gz \
     && cd /tmp && mkdir -p ${HOME}/.az && tar xf az_storage_explorer.tar.gz -C ${HOME}/.az \
-    && ln -s ${HOME}/.az/StorageExplorer /bin/azurestorageexplorer
-    #&& mkdir ${HOME}/rdesktop && tar xf {HOME}/rdesktop1.6.0.tar.gz -C ${HOME}/rdesktop
+    && mkdir -p /opt/caddy/store && mkdir -p /opt/caddy/logs && chown ubuntu:ubuntu -R /opt/caddy \
+    && ln -s ${HOME}/.az/StorageExplorer /bin/azurestorageexplorer && chmod +x /etc/init.d/caddy
 
 ### Update wetty
 RUN cd /opt/wetty && sudo npm install
