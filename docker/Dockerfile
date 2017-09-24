@@ -78,6 +78,14 @@ RUN curl -L https://go.microsoft.com/fwlink/?LinkId=722418 -o /tmp/az_storage_ex
     && mkdir -p /opt/caddy/store && mkdir -p /opt/caddy/logs && chown ubuntu:ubuntu -R /opt/caddy \
     && ln -s ${HOME}/.az/StorageExplorer /bin/azurestorageexplorer && chmod +x /etc/init.d/caddy
 
+### Install s3 cloud explorer
+RUN apt-get --assume-yes install ant openjdk-8-jdk-headless \
+    && mkdir -p ${HOME}/s3browser \
+    && git clone https://github.com/rusher81572/cloudExplorer.git ${HOME}/s3browser \
+    && cd ${HOME}/s3browser && ant \
+    && echo -e "#\!/bin/bash\n\njava -jar ${HOME}/s3browser/dist/CloudExplorer.jar" > /bin/s3explorer \
+    && chmod 755 /bin/s3explorer
+
 ### Update wetty
 RUN cd /opt/wetty && sudo npm install
 
