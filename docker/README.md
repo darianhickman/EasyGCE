@@ -16,7 +16,7 @@ Each Docker image is installed with the following components:
   1. Clone the [repository](https://github.com/darianhickman/easygce)
   2. Enter docker directory and run following `docker build -t <docker_image_name:tag ex. docker_username/easygce:1.0> .` Docker images are generally named with convention docker\_username/image\_name:tag
   3. Push docker image to docker cloud with following `docker push <docker_image_name:tag ex. docker_username/easygce:1.0>`
-  4. Run it from any server that has docker installed and running with `docker run -d -p 6901:6901 -p 5901:5901 -p 80:80 -p 3389:3389 docker_username/easygce:1.0`
+  4. Run it from any server that has docker installed and running with `docker run --restart unless-stopped -d -p 6901:6901 -p 5901:5901 -p 80:80 -p 3389:3389 docker_username/easygce:1.0`
 
 
 ## Usage
