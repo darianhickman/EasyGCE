@@ -20,7 +20,7 @@ GCE_BOOT_DISK_SIZE=30GB
 GCE_BOOT_DISK_TYPE=pd-ssd
 GCE_BOOT_DISK_AUTO_DELETE=--no-boot-disk-auto-delete
 # firewall
-GCE_OPEN_INBOUND_PORTS='tcp:22 tcp:80 tcp:443 tcp:3389 tcp:5901'
+GCE_OPEN_INBOUND_PORTS='22 80 443 3389 5901 6901'
 
 usage(){
   cat <<-EOF
@@ -36,12 +36,7 @@ Default values:
 EOF
 }
 
-if [[ $# -eq 0 ]]; then
-    usage
-    exit
-fi
-
-while getopts "p:m:n:z:i:" opt; do
+while getopts "p:m:n:z:i:h" opt; do
     case "${opt}" in
         p)
             GCE_PROJECT=${OPTARG}
@@ -58,6 +53,10 @@ while getopts "p:m:n:z:i:" opt; do
         i)
             GCE_OPEN_INBOUND_PORTS=${OPTARG}
             ;;
+        h)
+            usage
+            exit
+            ;;
         *)
             usage
             exit
@@ -66,6 +65,9 @@ while getopts "p:m:n:z:i:" opt; do
 done
 shift $((OPTIND-1))
 
+if [[ -z ${GCE_PROJECT} ]];
+    GCE_PROJECT=${GCE_PROJECT} || { echo -e "\n\tERROR: gce project not specified"; exit 1; }
+fi
 if [[ -z ${GCE_VM_NAME} ]]; then
     GCE_VM_NAME=${GCE_PROJECT}-$(date +%s)
 fi
@@ -76,15 +78,24 @@ fi
 
 gce_create_startup_script(){
   ##
-  ## create one startup script from all scripts in scripts direcotry
+  ## install docker on server start up
   ##
   # empty script if already exists
-  > ${GCE_VM_STARTUP_SCRIPT}
-  # concatenate all scripts from scripts directory into one
-  SCRIPTS_DIR="$(dirname "$(readlink -e ${BASH_SOURCE[0]})")/scripts"
-  for script in ${SCRIPTS_DIR}/*; do
-    cat $script >> ${GCE_VM_STARTUP_SCRIPT}
-  done
+  cat > ${GCE_VM_STARTUP_SCRIPT} <<EOF
+# basic update/upgrade
+apt-get update && apt-get --assume-yes upgrade
+# install docker and git
+apt-get --assume-yes install apt-transport-https ca-certificates curl software-properties-common git
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable"
+apt-get update
+apt-get --assume-yes install -y docker-ce
+# clone easygce repo
+mkdir -p /opt/easygce
+git clone https://github.com/darianhickman/easygce /opt/easygce
+cd /opt/easygce/docker && docker build -t easygce:1.0 .
+docker run -d --restart on-failure -p 3389:3389 -p 80:80 -p 5901:5901 -p 6901:6901 easygce:1.0
+EOF
 }
 
 gce_set_project(){
@@ -93,13 +104,13 @@ gce_set_project(){
 }
 
 gce_add_firewall_rules(){
-  # check if firewall rule already exists
-  gcloud compute firewall-rules list | grep $(echo ${GCE_OPEN_INBOUND_PORTS} | sed 's/[: ]/-/g') && return 0 || true
-  # add firewall rules
-  gcloud compute firewall-rules create inbound-$(echo ${GCE_OPEN_INBOUND_PORTS} | sed 's/[: ]/-/g') \
-    --action allow \
-    --rules $(echo ${GCE_OPEN_INBOUND_PORTS} | sed 's/ /,/g' ) \
-    --direction INGRESS --priority 1010
+  open_ports=$(gcloud compute firewall-rules list --format="table(allowed[].ports, direction, sourceRanges)" | grep 0.0.0.0 | grep -Eo "[0-9]{2,5}" | uniq)
+  for port in ${GCE_OPEN_INBOUND_PORTS}; do
+      if [[ ! $(echo $open_ports | grep $port ) ]]; then
+          gcloud compute firewall-rules create inbound-tcp-${port} --action allow \
+              --rules tcp:${port} --direction INGRESS --priority 14${port:0:3}
+      fi
+  done
 }
 
 gce_create_instance(){
@@ -120,6 +131,7 @@ main(){
   gce_set_project
   gce_add_firewall_rules
   gce_create_instance
+  echo -e "\n easygce instance ip: $(gcloud compute instances list | sed -n \"/${GCE_VM_NAME}/p\" | awk '{ print $5 }')"
 }
 
 main
