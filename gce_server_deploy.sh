@@ -7,7 +7,7 @@
 ## set defaults
 
 # project
-GCE_PROJECT=
+GCE_PROJECT_NAME=
 # vm
 GCE_MACHINE_TYPE=n1-standard-2
 GCE_VM_NAME=
@@ -42,7 +42,7 @@ while getopts "p:m:n:z:i:hb" opt; do
             GCE_BOOT_DISK_AUTO_DELETE=
             ;;
         p)
-            GCE_PROJECT=${OPTARG}
+            GCE_PROJECT_NAME=${OPTARG}
             ;;
         m)
             GCE_MACHINE_TYPE=${OPTARG}
@@ -68,11 +68,11 @@ while getopts "p:m:n:z:i:hb" opt; do
 done
 shift $((OPTIND-1))
 
-if [[ -z ${GCE_PROJECT} ]]; then
-    GCE_PROJECT=${GCE_PROJECT} || { echo -e "\n\tERROR: gce project not specified"; exit 1; }
+if [[ -z ${GCE_PROJECT_NAME} ]]; then
+    GCE_PROJECT_NAME=${GCE_PROJECT} || { echo -e "\n\tERROR: gce project not specified"; exit 1; }
 fi
 if [[ -z ${GCE_VM_NAME} ]]; then
-    GCE_VM_NAME=${GCE_PROJECT}-$(date +%s)
+    GCE_VM_NAME=${GCE_PROJECT_NAME}-$(date +%s)
 fi
 
 #####
@@ -103,7 +103,7 @@ EOF
 
 gce_set_project(){
   # set google cloud project
-  gcloud config set project ${GCE_PROJECT}
+  gcloud config set project ${GCE_PROJECT_NAME}
 }
 
 gce_add_firewall_rules(){
@@ -134,7 +134,7 @@ main(){
   gce_set_project
   gce_add_firewall_rules
   gce_create_instance
-  echo -e "\n easygce instance ip: $(gcloud compute instances list | sed -n \"/${GCE_VM_NAME}/p\" | awk '{ print $5 }')"
+  echo -e "\n easygce instance ip: $(gcloud compute instances list | grep ${GCE_VM_NAME} | awk '{ print $5 }')"
 }
 
 main
