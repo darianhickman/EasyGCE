@@ -27,3 +27,4 @@
 
   * Overriding default values is done during script invocation:
     * `./gce_server_deploy.sh -p <your_gce_project> -n <gce_server_name> -z <gce_server_zone> -m <gce_machine_type>`
+  * If `-b` switch is used during script invocation it will set google to auto delete boot disk on server deleting.
