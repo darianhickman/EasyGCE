@@ -25,7 +25,7 @@ GCE_OPEN_INBOUND_PORTS='22 80 443 3389 5901 6901'
 usage(){
   cat <<-EOF
 
-Usage: $0 -p <gce_project_name> -m <gce_machine_type> -n <gce_machine_name> -z <gce_machine_zone> -i <gce_project_open_ports> 
+Usage: $0 -p <gce_project_name> -m <gce_machine_type> -n <gce_machine_name> -z <gce_machine_zone> -i <gce_project_open_ports>  -b <delete_boot_disk>
 
 Default values:
   gce_project_name NONE
@@ -36,8 +36,11 @@ Default values:
 EOF
 }
 
-while getopts "p:m:n:z:i:h" opt; do
+while getopts "p:m:n:z:i:hb" opt; do
     case "${opt}" in
+        b)
+            GCE_BOOT_DISK_AUTO_DELETE=
+            ;;
         p)
             GCE_PROJECT=${OPTARG}
             ;;
