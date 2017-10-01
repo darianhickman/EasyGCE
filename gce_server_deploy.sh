@@ -68,7 +68,7 @@ while getopts "p:m:n:z:i:hb" opt; do
 done
 shift $((OPTIND-1))
 
-if [[ -z ${GCE_PROJECT} ]];
+if [[ -z ${GCE_PROJECT} ]]; then
     GCE_PROJECT=${GCE_PROJECT} || { echo -e "\n\tERROR: gce project not specified"; exit 1; }
 fi
 if [[ -z ${GCE_VM_NAME} ]]; then
